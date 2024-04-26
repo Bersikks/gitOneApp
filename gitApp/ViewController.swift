@@ -7,64 +7,48 @@
 
 import UIKit
 
-struct GitHubUser: Decodable {
-    let login: String
-    let url: String
-    let company: String?
-}
-
 class ViewController: UIViewController {
 
-    @IBOutlet weak var accountTextField: UITextField!
     @IBOutlet weak var resultLabel: UILabel!
     
     override func viewDidLoad() {
-    super.viewDidLoad()
-// Do any additional setup after loading the view.
-}
-
-@IBAction func searchButtonTapped(_ sender: UIButton) {
-    guard let accountName = accountTextField.text else {
-    return
-}
-
-fetchGitHubUserData(for: accountName)
-}
-
-func fetchGitHubUserData(for accountName: String) {
-    let urlString = "https://api.github.com/users/alexanderklimov"
-    guard let url = URL(string: urlString) else {
-    return
-}
-
-let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
-guard let self = self else { return }
-
-    if let error = error {
-    print("Error: \(error)")
-    return
+        super.viewDidLoad()
+        // Do any additional setup after loading the view.
     }
 
-    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-    print("Invalid response")
-    return
+    @IBAction func button_action(_ sender: UIButton) {
+        fetchDataFromServer()
     }
 
-    if let data = data {
-    do {
-    let decoder = JSONDecoder()
-    let user = try decoder.decode(GitHubUser.self, from: data)
-    DispatchQueue.main.async {
-        self.resultLabel.text = "Login: \(user.login)\nURL: \(user.url)\nCompany: \(user.company ?? "N/A")"
-    }
-    } catch {
-        print("Error decoding JSON: \(error)")
-    }
-    }
-}
+    func fetchDataFromServer() {
+        // Создание URL для запроса
+        guard let url = URL(string: "https://api.github.com/repos/square/retrofit/contributors") else {
+            return
+        }
 
-task.resume()
-}
+    // Создание запроса
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        guard let self = self else { return }
+        // Проверка на наличие ошибок
+        if let error = error {
+        print("Error: \(error.localizedDescription)")
+        return
+        }
+
+    // Парсинг данных, если они получены успешно
+        if let data = data {
+            if let result = String(data: data, encoding: .utf8) {
+            // Обновление пользовательского интерфейса на основе полученных данных
+                DispatchQueue.main.async {
+                    self.resultLabel.text = result
+                }
+            }
+        }
+    }
+
+    // Запуск запроса
+    task.resume()
+    }
 }
     
 
